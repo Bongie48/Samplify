@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Top 5 Difficult Words</title>
+  <link href="https://fonts.cdnfonts.com/css/open-dyslexic" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --accent: #facc15;
+      --bg: #f9fafb;
+      --text: #111827;
+      --card: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Open-Dyslexic', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    nav {
+      background-color: var(--card);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 0 0 16px 16px;
+      width: 100%;
+      max-width: 800px;
+      margin-bottom: 30px;
+    }
+
+    nav .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    nav .nav-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    nav .nav-links a {
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    h1 {
+      color: var(--primary);
+      margin-bottom: 30px;
+      font-size: 2rem;
+    }
+
+    .chart-container {
+      max-width: 700px; /* Adjusted for better horizontal spacing of vertical bars */
+      width: 100%;
+      padding: 20px;
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      display: flex; /* Use flexbox to arrange bars horizontally */
+      justify-content: space-around; /* Distribute space evenly */
+      align-items: flex-end; /* Align bars to the bottom */
+      height: 300px; /* Set a fixed height for the chart area */
+      position: relative; /* For positioning tooltips */
+      padding-bottom: 40px; /* Add space for x-axis labels */
+    }
+
+    /* --- Vertical Bar Graph Styles --- */
+    /* Removed old horizontal bar styles */
+    /* .bar, .bar-label, .bar-fill, .bar-fill::after */
+
+    .bar-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 80px; /* Set a fixed width for each bar and its label */
+      position: relative; /* For positioning tooltips */
+    }
+
+    .bar {
+      width: 100%; /* Bar fills the width of its wrapper */
+      background: #c7d2fe; /* Default bar color */
+      border-radius: 8px 8px 0 0; /* Rounded top corners */
+      transition: height 0.3s ease-in-out;
+      position: relative; /* For positioning the percentage text */
+    }
+
+    .bar:hover {
+      background: #818cf8; /* Hover color */
+    }
+
+    .bar-label {
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: center;
+      word-wrap: break-word; /* Allow long words to wrap */
+      font-size: 0.9rem; /* Adjust label size if needed */
+    }
+
+    .bar-percentage {
+      position: absolute;
+      top: -20px; /* Position above the bar */
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: var(--text);
+      font-weight: bold;
+    }
+
+    /* --- Tooltip Styles (reused and adjusted for vertical bars) --- */
+    .tooltip {
+      visibility: hidden;
+      background-color: var(--accent);
+      color: #000;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px 8px;
+      position: absolute;
+      z-index: 1;
+      bottom: calc(100% + 10px); /* Position above the bar, with some space */
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* Show tooltip on hover of the bar wrapper */
+    .bar-wrapper:hover .tooltip {
+      visibility: visible;
+    }
+
+    @media (max-width: 600px) {
+      nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .chart-container {
+        height: 250px; /* Adjust height for smaller screens */
+        padding-bottom: 50px; /* More space for potentially longer wrapped labels */
+      }
+
+      .bar-wrapper {
+        width: 60px; /* Reduce bar width on smaller screens */
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav>
+    <div class="logo">📘 Samplify</div>
+    <div class="nav-links">
+      <a href="index.html">Easy Read</a>
+      <a href="save.html">Word Hunt</a>
+      <a href="usergraph.html">Analystics</a>
+    </div>
+  </nav>
+
+  <h1>Top 5 Difficult Words</h1>
+
+  <div class="chart-container" id="barChart">
+    <!-- Vertical bars will be populated here by JS -->
+  </div>
+
+  <script>
+    const wordData = [
+      { word: "their", count: 25 },
+      { word: "psychology", count: 20 },
+      { word: "dessert", count: 17 },
+      { word: "knight", count: 14 },
+      { word: "principal", count: 12 }
+    ];
+
+    const totalCount = wordData.reduce((sum, item) => sum + item.count, 0);
+    const chart = document.getElementById("barChart");
+
+    // Clear any existing content
+    chart.innerHTML = '';
+
+    // Get the height of the chart container *after* it's potentially styled by CSS
+    // Use a small delay or ensure the element is rendered
+    setTimeout(() => {
+        const chartHeight = chart.clientHeight - 40; // Subtract bottom padding for label space
+
+        wordData.forEach(item => {
+          const percentage = (item.count / totalCount) * 100;
+          const barHeight = (percentage / 100) * chartHeight; // Calculate bar height based on available chart height
+
+          const barWrapper = document.createElement("div");
+          barWrapper.className = "bar-wrapper";
+
+          const bar = document.createElement("div");
+          bar.className = "bar";
+          bar.style.height = `${barHeight}px`; // Set the height of the bar
+
+          const barPercentage = document.createElement("span");
+          barPercentage.className = "bar-percentage";
+          barPercentage.textContent = `${percentage.toFixed(1)}%`; // Display percentage
+
+          const label = document.createElement("div");
+          label.className = "bar-label";
+          label.textContent = item.word;
+
+          const tooltip = document.createElement("div");
+          tooltip.className = "tooltip";
+          tooltip.textContent = `${item.word}: ${item.count} times`; // Tooltip shows word and count
+
+          // Append elements
+          bar.appendChild(barPercentage); // Percentage inside the bar (positioned absolutely)
+          barWrapper.appendChild(tooltip); // Tooltip inside the wrapper
+          barWrapper.appendChild(bar);
+          barWrapper.appendChild(label);
+          chart.appendChild(barWrapper);
+        });
+    }, 0); // Use setTimeout to ensure chart.clientHeight is correct after rendering
+
+  </script>
+
+</body>
+</html>

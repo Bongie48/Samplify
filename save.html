@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://aka.ms/csspeech/jsbrowserpackageraw"></script>
+  <link href="https://fonts.cdnfonts.com/css/open-dyslexic" rel="stylesheet">
+  <title>Reading Game</title>
+  <style>
+    body {
+      font-family: 'Open-Dyslexic', sans-serif;
+      background-color: #f9fafb;
+      color: #111827;
+      text-align: center;
+      padding: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+      color: #1f2937;
+    }
+
+    .word-box {
+      font-size: 48px;
+      margin: 30px auto;
+      padding: 25px 30px;
+      border-radius: 16px;
+      max-width: 340px;
+      background-color: #e5e7eb;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      transition: background-color 0.3s ease;
+    }
+
+    .correct {
+      background-color: #bbf7d0 !important;
+    }
+
+    .incorrect {
+      background-color: #fecaca !important;
+    }
+
+    .score {
+      font-size: 22px;
+      margin-top: 15px;
+      color: #374151;
+    }
+
+    #timer {
+      font-weight: bold;
+      color: #dc2626;
+      font-size: 20px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 18px;
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.1s ease;
+    }
+
+    button:hover {
+      background-color: #2563eb;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .game-container {
+      max-width: 420px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 40px 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    nav {
+      background-color: #ffffff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 0 0 16px 16px;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto 30px auto;
+    }
+
+    nav .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #4f46e5;
+    }
+
+    nav .nav-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    nav .nav-links a {
+      text-decoration: none;
+      color: #111827;
+      font-weight: 500;
+    }
+
+    @media (max-width: 600px) {
+      nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">📘 Samplify</div>
+    <div class="nav-links">
+      <a href="index.html">Easy Read</a>
+      <a href="save.html">Word Hunt</a>
+      <a href="usergraph.html">Analystics</a>
+    </div>
+  </nav>
+
+  <div class="game-container">
+    <h1>Daily Reading Challenge</h1>
+    <div id="wordBox" class="word-box">Click Start</div>
+    <button onclick="startGame()">Start Game</button>
+    <div class="score" id="timer" style="color: red; display: none;">Time Left: 5s</div>
+    <div class="score" id="score">Score: 0</div>
+    <div class="score" id="remaining">Words Left: 20</div>
+  </div>
+
+  <script>
+    const words = [
+      "accept", "advice", "advise", "affect", "angle", "angel", "ballet", "bare",
+      "bear", "castle", "comb", "complement", "compliment", "debt", "desert", "dessert",
+      "doubt", "effect", "except", "flour", "flower", "form", "from", "ghost", "gnome",
+      "hear", "heir", "here", "honest", "honour", "hour", "it's", "its", "island", "knight",
+      "lamb", "listen", "nighT", "no", "numb", "on", "one", "peace", "piece", "plain", "plane",
+      "plumber", "principal", "principle", "psychology", "quiet", "quite", "receipt", "rhythm",
+      "right", "sail", "sale", "saw", "sea", "see", "silent", "stationary", "stationery", "subtle",
+      "sun", "son", "sword", "tail", "tale", "their", "there", "they're", "thumb", "to", "too",
+      "two", "wait", "was", "weather", "weight", "whether", "which", "whistle", "witch", "won",
+      "write", "you're", "your"
+    ];
+
+    let score = 0;
+    let streak = 0;
+    let usedWords = [];
+    let incorrectWords = new Set();
+    let dailyLimit = 20;
+    let currentWord = '';
+    let recognition;
+    let countdown;
+    let timeLeft = 5;
+
+    function startGame() {
+      if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        alert("Speech Recognition not supported");
+        return;
+      }
+      document.getElementById("timer").style.display = "block";
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onresult = function (event) {
+        const spoken = event.results[0][0].transcript.toLowerCase().trim();
+        checkWord(spoken);
+      };
+
+      // recognition.onerror = function (event) {
+      //   alert('Error occurred in recognition: ' + event.error);
+      // };
+
+      nextWord();
+    }
+
+    function nextWord() {
+      if (dailyLimit <= 0) {
+        document.getElementById("wordBox").innerText = "You've completed today's challenge!";
+        return;
+      }
+
+      let availableWords = words.filter(w => !usedWords.includes(w) && !incorrectWords.has(w));
+      if (availableWords.length === 0) {
+        document.getElementById("wordBox").innerText = "No more words left to try today.";
+        return;
+      }
+
+      currentWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+      usedWords.push(currentWord);
+
+      const box = document.getElementById("wordBox");
+      box.className = 'word-box';
+      box.innerText = currentWord;
+
+      timeLeft = 5;
+      updateTimer();
+      countdown = setInterval(() => {
+        timeLeft--;
+        updateTimer();
+        if (timeLeft <= 0) {
+          clearInterval(countdown);
+          recognition.abort();  // Cancel recognition
+          box.classList.add("incorrect");
+          score -= 1;
+          streak = 0;
+          incorrectWords.add(currentWord);
+          speakCorrection(currentWord);
+          dailyLimit--;
+          updateStats();
+          setTimeout(nextWord, 2000);
+        }
+      }, 1000);
+
+      recognition.start();
+    }
+
+    function checkWord(spoken) {
+      clearInterval(countdown);  // Stop timer when user speaks
+      const box = document.getElementById("wordBox");
+
+      if (spoken === currentWord.toLowerCase()) {
+        box.classList.add("correct");
+        score += 1;
+        streak += 1;
+
+        // ✅ Remove correctly spoken word from the list
+        const index = words.indexOf(currentWord);
+        if (index > -1) {
+          words.splice(index, 1);
+        }
+
+        if (streak >= 3) {
+          dailyLimit += 1;
+          streak = 0;
+        }
+      } else {
+        box.classList.add("incorrect");
+        score -= 1;
+        streak = 0;
+        incorrectWords.add(currentWord);
+        speakCorrection(currentWord);
+      }
+
+      dailyLimit--;
+      updateStats();
+      setTimeout(nextWord, 2000);
+    }
+
+    function updateTimer() {
+      document.getElementById("timer").innerText = "Time Left: " + timeLeft + "s";
+    }
+
+    function updateStats() {
+      document.getElementById("score").innerText = "Score: " + score;
+      document.getElementById("remaining").innerText = "Words Left: " + dailyLimit;
+    }
+
+    function speakCorrection(word) {
+      const utterance = new SpeechSynthesisUtterance(`The correct pronunciation is ${word}`);
+      utterance.lang = 'en-US';
+      speechSynthesis.speak(utterance);
+    }
+  </script>
+</body>
+</html>

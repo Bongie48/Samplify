@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://aka.ms/csspeech/jsbrowserpackageraw"></script>
+  <title>Reading Game with Azure Speech</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9fafb;
+      color: #111827;
+      text-align: center;
+      padding: 50px;
+    }
+    .word-box {
+      font-size: 48px;
+      margin: 40px auto;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 300px;
+      background-color: #e5e7eb;
+    }
+    .correct {
+      background-color: #bbf7d0 !important;
+    }
+    .incorrect {
+      background-color: #fecaca !important;
+    }
+    .score {
+      font-size: 24px;
+      margin-top: 20px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #nextWordButton {
+      display: none;  /* Initially hidden */
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Daily Reading Challenge</h1>
+  <div id="wordBox" class="word-box">Click Start</div>
+  <button onclick="startGame()">Start Game</button>
+  <div class="score" id="score">Score: 0</div>
+  <div class="score" id="remaining">Words Left: 20</div>
+  
+  <!-- New Button to move to the next word -->
+  <button id="nextWordButton" onclick="nextWord()">Next Word</button>
+
+  <!-- <script>
+    const words = [
+      "apple", "banana", "computer", "school", "orange",
+      "zebra", "yellow", "giraffe", "pencil", "water",
+      "elephant", "book", "car", "mountain", "rainbow",
+      "phone", "glasses", "chair", "window", "table"
+    ];
+
+    let score = 0;
+    let streak = 0;
+    let usedWords = [];
+    let incorrectWords = new Set();
+    let dailyLimit = 20;
+    let currentWord = '';
+    let recognizer;
+
+    // Azure API Key and Region (Replace these with your actual API key and region)
+    const apiKey = '4wwnJdSoy2NhiUEq9ROCeceVEcLwpAKtBXnQcCWFxywdF3NAaeo3JQQJ99BEACYeBjFXJ3w3AAAYACOGBITk';  // Replace with your actual API key
+    const region = 'eastus';  
+
+    // Initialize Speech SDK with Azure Speech API
+    const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(apiKey, region);
+    speechConfig.speechRecognitionLanguage = 'en-US';
+
+    function startGame() {
+      if (!recognizer) {
+        const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+        recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+      }
+
+      // Prepare recognizer for continuous recognition
+      recognizer.startContinuousRecognitionAsync();
+
+      recognizer.recognizing = function (s, e) {
+        const spoken = e.result.text.toLowerCase().trim();
+        console.log(`Recognizing: ${spoken}`);
+        checkWord(spoken);
+      };
+
+      recognizer.recognized = function (s, e) {
+        const spoken = e.result.text.toLowerCase().trim();
+        console.log(`Recognized: ${spoken}`);
+        checkWord(spoken);
+      };
+
+      recognizer.canceled = function (s, e) {
+        alert('Error occurred in recognition: ' + e.errorDetails);
+      };
+
+      nextWord();  // Begin the game with the first word
+    }
+
+    function nextWord() {
+      if (dailyLimit <= 0) {
+        document.getElementById("wordBox").innerText = "You've completed today's challenge!";
+        return;
+      }
+
+      let availableWords = words.filter(w => !usedWords.includes(w) && !incorrectWords.has(w));
+      if (availableWords.length === 0) {
+        document.getElementById("wordBox").innerText = "No more words left to try today.";
+        return;
+      }
+
+      currentWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+      usedWords.push(currentWord);
+
+      const box = document.getElementById("wordBox");
+      box.className = 'word-box';
+      box.innerText = currentWord;
+
+      document.getElementById("nextWordButton").style.display = 'none';  // Hide Next Word button until response is given
+
+      recognizer.stopContinuousRecognitionAsync();  // Stop recognition until the user presses "Next Word"
+    }
+
+    function checkWord(spoken) {
+      // Clean up any punctuation (e.g., periods, commas) from the recognized word
+      const cleanedSpoken = spoken.replace(/[.,!?;()]/g, '').toLowerCase().trim();
+
+      const box = document.getElementById("wordBox");
+      console.log(`Spoken: ${cleanedSpoken}, Correct Answer: ${currentWord.toLowerCase()}`);
+
+      if (cleanedSpoken === currentWord.toLowerCase()) {
+        box.classList.add("correct");
+        score += 1;
+        streak += 1;
+        console.log(`Correct! The word was: ${currentWord}`);  // Log the correct answer
+
+        if (streak >= 3) {
+          dailyLimit += 1;
+          streak = 0;
+        }
+      } else {
+        box.classList.add("incorrect");
+        score -= 1;
+        streak = 0;
+        incorrectWords.add(currentWord);
+        speakCorrection(currentWord);
+      }
+
+      dailyLimit--;
+      updateStats();
+
+      // Show Next Word button after feedback
+      document.getElementById("nextWordButton").style.display = 'inline-block';  // Show button
+    }
+
+    function updateStats() {
+      document.getElementById("score").innerText = "Score: " + score;
+      document.getElementById("remaining").innerText = "Words Left: " + dailyLimit;
+    }
+
+    function speakCorrection(word) {
+      const utterance = new SpeechSynthesisUtterance(`The correct pronunciation is ${word}`);
+      utterance.lang = 'en-US';
+      speechSynthesis.speak(utterance);
+    }
+  </script> -->
+<script src="data.js">
+let score = 0;
+let streak = 0;
+let usedWords = [];
+let dailyLimit = 20;
+let currentWordObj = null;
+let recognition;
+
+function startGame() {
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    alert("Speech Recognition not supported");
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = function(event) {
+    const spoken = event.results[0][0].transcript.toLowerCase().trim();
+    checkWord(spoken);
+  };
+
+  recognition.onerror = function(event) {
+    alert('Error occurred in recognition: ' + event.error);
+  };
+
+  nextWord();
+}
+
+function nextWord() {
+  if (dailyLimit <= 0) {
+    document.getElementById("wordBox").innerText = "You've completed today's challenge!";
+    return;
+  }
+
+  let availableWords = wordData.filter(w => !usedWords.includes(w.word));
+  if (availableWords.length === 0) {
+    document.getElementById("wordBox").innerText = "No more words left to try today.";
+    return;
+  }
+
+  currentWordObj = availableWords[Math.floor(Math.random() * availableWords.length)];
+  usedWords.push(currentWordObj.word);
+
+  const box = document.getElementById("wordBox");
+  box.className = 'word-box';
+  box.innerText = currentWordObj.word;
+
+  recognition.start();
+}
+
+function checkWord(spoken) {
+  const box = document.getElementById("wordBox");
+  const targetWord = currentWordObj.word.toLowerCase();
+
+  if (spoken === targetWord) {
+    box.classList.add("correct");
+    score += 1;
+    streak += 1;
+    currentWordObj.correct += 1;
+
+    if (streak >= 3) {
+      dailyLimit += 1;
+      streak = 0;
+      alert("Great job! You've answered 3 words correctly in a row! You get an extra word.");
+    }
+  } else {
+    box.classList.add("incorrect");
+    score -= 1;
+    streak = 0;
+    currentWordObj.incorrect += 1;
+    speakCorrection(currentWordObj.word);
+  }
+
+  dailyLimit--;
+  updateStats();
+  setTimeout(nextWord, 2000);
+}
+
+function updateStats() {
+  document.getElementById("score").innerText = "Score: " + score;
+  document.getElementById("remaining").innerText = "Words Left: " + dailyLimit;
+}
+
+function speakCorrection(word) {
+  const utterance = new SpeechSynthesisUtterance(`The correct pronunciation is ${word}`);
+  utterance.lang = 'en-US';
+  speechSynthesis.speak(utterance);
+}
+
+
+</script>
+</body>
+</html>

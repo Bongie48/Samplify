@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Text Processor</title>
+  <link href="https://fonts.cdnfonts.com/css/open-dyslexic" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/rtf.js/2.2.2/rtf.min.js"></script>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --accent: #facc15;
+      --bg: #f9fafb;
+      --text: #111827;
+      --card: #ffffff;
+    }
+
+    body {
+      font-family: 'Open-Dyslexic', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    nav {
+      background-color: var(--card);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 0 0 16px 16px;
+      width: 100%;
+      max-width: 800px;
+      margin-bottom: 30px;
+    }
+
+    nav .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    nav .nav-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    nav .nav-links a {
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .container {
+      background-color: var(--card);
+      padding: 30px;
+      border-radius: 16px;
+      max-width: 800px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 16px;
+      margin-bottom: 20px;
+      resize: vertical;
+    }
+
+    .input-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .input-group label {
+      font-weight: 500;
+    }
+
+    .input-group input,
+    .input-group select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+    }
+
+    .buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .button {
+      background-color: var(--primary);
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .button:hover {
+      background-color: #4338ca;
+    }
+
+    .output-container {
+      margin-top: 30px;
+      padding: 20px;
+      border-radius: 12px;
+      background-color: #f3f4f6;
+      display: none;
+    }
+
+    #outputText {
+      font-size: 1.1rem;
+      line-height: 20px;
+    }
+
+    .speak-button {
+      display: inline-block;
+      background-color: #facc15;
+      padding: 3px 6px;
+      font-size: 0.9em;
+      border-radius: 6px;
+      margin-left: 6px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+      nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .input-group {
+        flex-direction: column;
+      }
+    }
+    .speak-button {
+  display: none;
+  background-color: #facc15;
+  padding: 3px 6px;
+  font-size: 0.9em;
+  border-radius: 6px;
+  margin-left: 6px;
+  cursor: pointer;
+}
+
+.speakable:hover .speak-button {
+  display: inline-block;
+}
+
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">📘 Samplify</div>
+  <div class="nav-links">
+    <a href="index.html">Easy Read</a>
+    <a href="save.html">Word Hunt</a>
+    <a href="usergraph.html">Analystics</a>
+  </div>
+</nav>
+
+<div class="container">
+  <h2>Smart Text Processor</h2>
+
+  <textarea id="userInput" placeholder="Paste or type your text here..."></textarea>
+
+  <div class="input-group">
+    <div style="flex:1;">
+      <label>Upload File</label>
+      <input type="file" id="fileInput" accept=".txt, .pdf, .docx, .rtf">
+    </div>
+    <div style="flex:1;">
+      <label>Font</label>
+      <select id="fontSelect">
+        <option value="'Open-Dyslexic', sans-serif" selected>OpenDyslexic (Default)</option>
+        <option value="Arial">Arial</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Verdana">Verdana</option>
+        <option value="Times New Roman">Times New Roman</option>
+      </select>
+    </div>
+    <div style="flex:1;">
+      <label></label>
+      <input type="color" id="bgColorPicker" value="#e0e0e0" hidden>
+    </div>
+    <div style="flex:1;">
+      <select id="lineSpacing" hidden>
+        <option value="2">2</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button class="button" onclick="processText()">Easy Read</button>
+    <button class="button" onclick="speakText()">Text to Speech</button>
+  </div>
+
+  <div class="output-container" id="outputContainer">
+    <h3 style="margin-bottom: 10px; font-size: 2rem"> <u>Output:</u> </h3>
+    <div id="outputText"></div>
+  </div>
+</div>
+
+<script>
+  const confusingWords = {
+    Homophones: ["their", "there", "they're", "to", "too", "two", "your", "you're", "its", "it's", "hear", "here"],
+    SilentLetters: ["knight", "gnome", "psychology", "honest", "island"],
+    SimilarSpellings: ["form", "from", "was", "saw", "on", "no", "quiet", "quite"]
+  };
+
+  const allConfusingWords = new Set([
+    ...confusingWords.Homophones,
+    ...confusingWords.SilentLetters,
+    ...confusingWords.SimilarSpellings
+  ]);
+
+  let selectedVoice = null;
+
+  function loadVoices() {
+    const voices = speechSynthesis.getVoices();
+    selectedVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes("Google")) || voices[0];
+  }
+
+  speechSynthesis.onvoiceschanged = loadVoices;
+  loadVoices();
+
+  function processText() {
+    const input = document.getElementById("userInput").value;
+    const font = document.getElementById("fontSelect").value;
+    const bgColor = document.getElementById("bgColorPicker").value;
+    const lineSpacing = document.getElementById("lineSpacing").value;
+
+    const output = document.getElementById("outputText");
+    const container = document.getElementById("outputContainer");
+
+    const words = input.split(/\b/);
+    const highlighted = words.map(word => {
+      const clean = word.toLowerCase().replace(/[^a-z']/g, '');
+      if (allConfusingWords.has(clean)) {
+        return `<span style="background-color: #f87171; font-weight: bold; font-size: 1.2em;" class="speakable">${word} <span class="speak-button" data-word="${clean}">🔈</span></span>`;
+      }
+      return word;
+    }).join('');
+
+    output.innerHTML = highlighted;
+    output.style.fontFamily = font;
+    output.style.lineHeight = lineSpacing;
+    container.style.backgroundColor = bgColor;
+    container.style.display = 'block';
+
+    document.querySelectorAll('.speak-button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const word = btn.getAttribute('data-word');
+        speakWord(word);
+      });
+    });
+  }
+
+  function speakText() {
+    const outputText = document.getElementById("outputText").textContent.trim();
+    const inputText = document.getElementById("userInput").value.trim();
+    const textToSpeak = outputText || inputText;
+
+    if (textToSpeak) {
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.rate = 0.6;
+      if (selectedVoice) utterance.voice = selectedVoice;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utterance);
+    }
+  }
+
+  function speakWord(word) {
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.rate = 0.6;
+    if (selectedVoice) utterance.voice = selectedVoice;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  }
+
+  // File input handlers
+  document.getElementById("fileInput").addEventListener("change", function () {
+    const file = this.files[0];
+    if (!file) return;
+    const fileType = file.type;
+
+    if (fileType === 'application/pdf') {
+      extractTextFromPDF(file);
+    } else if (fileType === 'text/plain') {
+      extractTextFromTextFile(file);
+    } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      extractTextFromDocx(file);
+    } else if (fileType === 'application/rtf') {
+      extractTextFromRtf(file);
+    }
+  });
+
+  function extractTextFromPDF(file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const typedarray = new Uint8Array(e.target.result);
+      pdfjsLib.getDocument(typedarray).promise.then(function (pdf) {
+        let textContent = '';
+        let pageNumber = 1;
+        const extractPageText = (pageNum) => {
+          pdf.getPage(pageNum).then(page => {
+            page.getTextContent().then(text => {
+              text.items.forEach(item => textContent += item.str + ' ');
+              pageNumber++;
+              if (pageNumber <= pdf.numPages) extractPageText(pageNumber);
+              else document.getElementById("userInput").value = textContent;
+            });
+          });
+        };
+        extractPageText(pageNumber);
+      });
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function extractTextFromTextFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById("userInput").value = e.target.result;
+    };
+    reader.readAsText(file);
+  }
+
+  function extractTextFromDocx(file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      mammoth.extractRawText({ arrayBuffer: e.target.result })
+        .then(result => document.getElementById("userInput").value = result.value)
+        .catch(err => console.error("Error extracting text from docx:", err));
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function extractTextFromRtf(file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const rtf = e.target.result;
+      const doc = RTFParser.parse(rtf);
+      document.getElementById("userInput").value = doc.text();
+    };
+    reader.readAsText(file);
+  }
+</script>
+
+</body>
+</html>
+<!-- Compare this snippet from save.html: -->
